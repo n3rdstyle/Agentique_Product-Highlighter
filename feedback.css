@@ -1,0 +1,181 @@
+.feedback-dialog {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-width: 250px;
+  animation: feedbackFadeIn 0.2s ease-out;
+}
+
+@keyframes feedbackFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feedback-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feedback-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.feedback-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.feedback-btn.correct {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.feedback-btn.correct:hover {
+  background: #28a745;
+  color: white;
+}
+
+.feedback-btn.incorrect {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.feedback-btn.incorrect:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.feedback-btn.irrelevant {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.feedback-btn.irrelevant:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.feedback-close {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #999;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-close:hover {
+  color: #666;
+}
+
+.analytics-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 9999;
+  display: none;
+}
+
+.analytics-panel.visible {
+  display: block;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.analytics-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.analytics-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.analytics-metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.analytics-metric .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.analytics-metric .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.analytics-metric.accuracy .value {
+  color: #28a745;
+}
+
+.analytics-metric.performance .value {
+  color: #17a2b8;
+}

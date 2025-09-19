@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Product Highlighter",
+  "version": "1.0",
+  "description": "Highlights products on search result pages based on user prompts",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Product Highlighter"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["groq-enhancer.js", "content.js", "evaluator.js"],
+      "css": ["highlight.css", "feedback.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

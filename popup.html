@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --surface: #ffffff;
+      --surface-elevated: #f8fafc;
+      --surface-secondary: #f1f5f9;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      padding: 0;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--primary-gradient);
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .header h2 {
+      margin: 0;
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header .subtitle {
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      margin-top: 4px;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+
+    .content {
+      padding: 24px 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: var(--surface);
+    }
+
+    textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .slider-group {
+      margin-bottom: 20px;
+    }
+
+    .slider-container {
+      position: relative;
+      margin: 12px 0;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-light);
+      outline: none;
+      appearance: none;
+      transition: all 0.2s ease;
+    }
+
+    .slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: all 0.2s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      cursor: pointer;
+      border: none;
+      box-shadow: var(--shadow-md);
+    }
+
+    .slider-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-gradient);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+      min-width: 50px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--surface-elevated);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .toggle {
+      position: relative;
+      width: 56px;
+      height: 32px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border-medium);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 32px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 4px;
+      bottom: 4px;
+      background: white;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: var(--shadow-md);
+    }
+
+    input:checked + .toggle-slider {
+      background: var(--primary-gradient);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+    }
+
+    .button {
+      width: 100%;
+      padding: 16px 24px;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .button:hover::before {
+      left: 100%;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:disabled {
+      background: var(--border-medium);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .status.success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #065f46;
+      border: 1px solid #34d399;
+    }
+
+    .status.error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .example {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: var(--surface-secondary);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent-gradient);
+    }
+
+    .analytics-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border-light);
+      padding-top: 24px;
+    }
+
+    .analytics-toggle-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .analytics-toggle-btn:hover {
+      background: var(--surface-secondary);
+      border-color: var(--border-medium);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .analytics-panel {
+      margin-top: 16px;
+      padding: 20px;
+      background: var(--surface-elevated);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .analytics-header h4 {
+      margin: 0 0 16px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .metric-row span:first-child {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .metric-row span:last-child {
+      font-weight: 700;
+      color: var(--text-primary);
+      background: var(--surface-secondary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .groq-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .api-key-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .api-key-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .api-key-input::placeholder {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>🎯 Product Highlighter</h2>
+    <div class="subtitle">AI-powered product discovery</div>
+  </div>
+
+  <div class="content">
+    <div class="form-group">
+      <label for="prompt">What are you looking for?</label>
+      <textarea id="prompt" placeholder="e.g., wireless headphones with noise cancellation under $200"></textarea>
+      <div class="example">💡 Example: "gaming laptop with RTX graphics" or "organic skincare products"</div>
+    </div>
+
+    <div class="slider-group">
+      <label for="threshold">Match Sensitivity: <span class="slider-value" id="thresholdValue">60%</span></label>
+      <div class="slider-container">
+        <input type="range" id="threshold" class="slider" min="30" max="90" value="60">
+      </div>
+    </div>
+
+    <div class="toggle-group">
+      <label>Enable Highlighting</label>
+      <label class="toggle">
+        <input type="checkbox" id="enabled" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="groq-section">
+      <div class="form-group">
+        <label for="groqApiKey">🚀 Groq API Key (Optional)</label>
+        <input type="password" id="groqApiKey" placeholder="gsk_..." class="api-key-input">
+        <div class="example">🤖 Enable AI-powered matching for better accuracy</div>
+      </div>
+
+      <div class="toggle-group">
+        <label>Enable Groq AI Enhancement</label>
+        <label class="toggle">
+          <input type="checkbox" id="groqEnabled">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button id="apply" class="button">Apply Highlighting</button>
+
+    <div class="analytics-section">
+      <button id="toggleAnalytics" class="analytics-toggle-btn">
+        <span>📊</span>
+        <span>View Analytics</span>
+      </button>
+      <div id="analyticsPanel" class="analytics-panel" style="display: none;">
+        <div class="analytics-header">
+          <h4>Performance Metrics</h4>
+        </div>
+        <div id="analyticsContent">
+          <div class="metric-row">
+            <span>Accuracy:</span>
+            <span id="accuracyMetric">--</span>
+          </div>
+          <div class="metric-row">
+            <span>Total Feedback:</span>
+            <span id="feedbackMetric">--</span>
+          </div>
+          <div class="metric-row">
+            <span>Avg Processing:</span>
+            <span id="performanceMetric">--</span>
+          </div>
+          <div class="metric-row">
+            <span>Algorithm:</span>
+            <span id="versionMetric">--</span>
+          </div>
+          <div class="metric-row">
+            <span>Test Group:</span>
+            <span id="groupMetric">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="status" style="display: none;"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+/* Modern highlighting styles with CSS custom properties */
+:root {
+  --highlight-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --highlight-strong: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --highlight-medium: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --highlight-glow-primary: rgba(102, 126, 234, 0.3);
+  --highlight-glow-strong: rgba(245, 87, 108, 0.4);
+  --highlight-glow-medium: rgba(79, 172, 254, 0.3);
+  --highlight-radius: 12px;
+  --highlight-border-width: 2px;
+}
+
+.product-highlight {
+  position: relative;
+  box-shadow: 0 4px 20px var(--highlight-glow-primary);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+.product-highlight:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px var(--highlight-glow-primary);
+}
+
+.product-highlight::before {
+  content: "✨ Match";
+  position: absolute;
+  top: -12px;
+  left: 12px;
+  background: var(--highlight-primary);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+.product-highlight-strong {
+  box-shadow: 0 6px 25px var(--highlight-glow-strong);
+}
+
+.product-highlight-strong:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 40px var(--highlight-glow-strong);
+}
+
+.product-highlight-strong::before {
+  content: "🎯 Perfect";
+  background: var(--highlight-strong);
+  animation: pulse 2s infinite;
+}
+
+.product-highlight-medium {
+  box-shadow: 0 4px 20px var(--highlight-glow-medium);
+}
+
+.product-highlight-medium:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px var(--highlight-glow-medium);
+}
+
+.product-highlight-medium::before {
+  content: "⭐ Great";
+  background: var(--highlight-medium);
+}
+
+/* Subtle pulse animation for strong matches */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-highlight::before {
+    padding: 4px 8px;
+    font-size: 10px;
+    top: -10px;
+    left: 8px;
+  }
+
+  .product-highlight:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+/* Dark mode support - only badge adjustments needed now */
+@media (prefers-color-scheme: dark) {
+  .product-highlight::before,
+  .product-highlight-strong::before,
+  .product-highlight-medium::before {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}

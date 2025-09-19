@@ -1,0 +1,245 @@
+{
+  "evaluation_framework": {
+    "name": "Product Highlighter Extension Evaluator",
+    "version": "1.0.0",
+    "purpose": "Automated evaluation and optimization system for Claude to improve the browser extension",
+    "last_updated": "2025-09-19"
+  },
+
+  "evaluation_targets": {
+    "functionality": {
+      "weight": 0.40,
+      "tests": [
+        {
+          "name": "Product Detection Accuracy",
+          "target_score": 0.85,
+          "test_sites": ["amazon.com", "ebay.com", "etsy.com"],
+          "metrics": ["detection_rate", "false_positive_rate", "processing_time"]
+        },
+        {
+          "name": "Algorithm Matching Precision",
+          "target_score": 0.80,
+          "test_cases": ["exact_match", "semantic_match", "false_positive_rejection"],
+          "metrics": ["precision", "recall", "f1_score"]
+        }
+      ]
+    },
+
+    "performance": {
+      "weight": 0.30,
+      "benchmarks": [
+        {
+          "name": "Processing Speed",
+          "target": "< 100ms per 50 elements",
+          "metric": "processing_time"
+        },
+        {
+          "name": "Memory Usage",
+          "target": "< 10MB increase over 30s",
+          "metric": "memory_consumption"
+        },
+        {
+          "name": "UI Responsiveness",
+          "target": "> 60fps during processing",
+          "metric": "frame_rate"
+        }
+      ]
+    },
+
+    "code_quality": {
+      "weight": 0.30,
+      "metrics": [
+        {
+          "name": "Cyclomatic Complexity",
+          "target": "< 10 per method",
+          "tool": "static_analysis"
+        },
+        {
+          "name": "Maintainability Index",
+          "target": "> 65",
+          "tool": "maintainability_analyzer"
+        },
+        {
+          "name": "Test Coverage",
+          "target": "> 80%",
+          "tool": "coverage_analyzer"
+        }
+      ]
+    }
+  },
+
+  "optimization_strategies": {
+    "performance": {
+      "techniques": [
+        "implement_caching",
+        "batch_processing",
+        "lazy_loading",
+        "debounced_updates",
+        "web_workers"
+      ],
+      "expected_improvements": {
+        "processing_time": "40-60% reduction",
+        "memory_usage": "30-50% reduction",
+        "ui_responsiveness": "maintained 60fps"
+      }
+    },
+
+    "accuracy": {
+      "techniques": [
+        "enhanced_semantic_matching",
+        "adaptive_weighting",
+        "brand_recognition",
+        "category_classification",
+        "price_extraction"
+      ],
+      "expected_improvements": {
+        "precision": "15-25% increase",
+        "recall": "10-20% increase",
+        "user_satisfaction": "significant improvement"
+      }
+    },
+
+    "maintainability": {
+      "techniques": [
+        "method_extraction",
+        "responsibility_separation",
+        "comment_addition",
+        "type_annotations",
+        "error_handling"
+      ],
+      "expected_improvements": {
+        "complexity": "reduce by 30-40%",
+        "maintainability_index": "increase by 20-30%",
+        "debugging_ease": "significant improvement"
+      }
+    }
+  },
+
+  "evaluation_commands": {
+    "quick_check": {
+      "command": "checkExtensionHealth()",
+      "description": "Fast health check of core functionality",
+      "runtime": "< 5 seconds",
+      "use_case": "Before making changes or debugging issues"
+    },
+
+    "full_evaluation": {
+      "command": "runQuickEvaluation()",
+      "description": "Comprehensive evaluation with optimization suggestions",
+      "runtime": "30-60 seconds",
+      "use_case": "Before major releases or after significant changes"
+    },
+
+    "performance_benchmark": {
+      "command": "testRunner.evaluator.runPerformanceTests()",
+      "description": "Focus on performance metrics only",
+      "runtime": "10-20 seconds",
+      "use_case": "After performance optimizations"
+    },
+
+    "code_quality_scan": {
+      "command": "testRunner.evaluator.analyzeCodeQuality()",
+      "description": "Static analysis of code quality metrics",
+      "runtime": "5-10 seconds",
+      "use_case": "During code refactoring"
+    }
+  },
+
+  "optimization_workflow": {
+    "steps": [
+      {
+        "step": 1,
+        "action": "Run full evaluation",
+        "command": "runQuickEvaluation()",
+        "decision_point": "Overall score < 80%?"
+      },
+      {
+        "step": 2,
+        "action": "Identify critical issues",
+        "focus": "Failed tests and performance bottlenecks",
+        "priority": "High impact, low effort first"
+      },
+      {
+        "step": 3,
+        "action": "Implement optimizations",
+        "approach": "One category at a time (performance, accuracy, maintainability)",
+        "validation": "Run targeted tests after each change"
+      },
+      {
+        "step": 4,
+        "action": "Validate improvements",
+        "command": "checkExtensionHealth()",
+        "criteria": "All tests passing, performance targets met"
+      },
+      {
+        "step": 5,
+        "action": "Run regression tests",
+        "purpose": "Ensure new changes don't break existing functionality",
+        "frequency": "After every optimization cycle"
+      }
+    ]
+  },
+
+  "success_criteria": {
+    "minimum_viable": {
+      "overall_score": "> 70%",
+      "critical_tests_passing": "100%",
+      "performance_acceptable": "meets basic benchmarks",
+      "no_breaking_changes": "all existing functionality works"
+    },
+
+    "production_ready": {
+      "overall_score": "> 85%",
+      "all_tests_passing": "100%",
+      "performance_optimized": "meets all performance targets",
+      "code_quality_high": "maintainability index > 75",
+      "user_experience": "smooth and responsive"
+    },
+
+    "excellence_standard": {
+      "overall_score": "> 95%",
+      "test_coverage": "> 90%",
+      "performance_exceptional": "exceeds all benchmarks by 20%+",
+      "code_quality_excellent": "maintainability index > 85",
+      "innovation": "implements advanced features successfully"
+    }
+  },
+
+  "claude_usage_instructions": {
+    "getting_started": [
+      "1. Run 'checkExtensionHealth()' to verify current state",
+      "2. If issues found, run 'runQuickEvaluation()' for detailed analysis",
+      "3. Review optimization suggestions in the returned report",
+      "4. Implement highest priority optimizations first",
+      "5. Re-run evaluation to measure improvements"
+    ],
+
+    "common_scenarios": {
+      "debugging_performance_issues": {
+        "command": "testRunner.evaluator.runPerformanceTests()",
+        "look_for": "Failed benchmarks, slow processing times",
+        "optimize": "Implement caching, batch processing"
+      },
+
+      "improving_accuracy": {
+        "command": "testRunner.evaluator.testAlgorithmAccuracy()",
+        "look_for": "Low matching scores, false positives",
+        "optimize": "Enhance semantic matching, add brand recognition"
+      },
+
+      "refactoring_code": {
+        "command": "testRunner.evaluator.analyzeCodeQuality()",
+        "look_for": "High complexity, low maintainability",
+        "optimize": "Extract methods, improve separation of concerns"
+      }
+    },
+
+    "best_practices": [
+      "Always run health check before making changes",
+      "Test one optimization at a time",
+      "Validate improvements with targeted tests",
+      "Keep optimization history for rollback if needed",
+      "Focus on user-impacting improvements first"
+    ]
+  }
+}
