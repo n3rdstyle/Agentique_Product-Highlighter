@@ -15,12 +15,17 @@ class ProductHighlighter {
     this.groqEnhancer = new GroqProductEnhancer();
     this.useGroq = false;
 
+    // Toolbar state
+    this.toolbar = null;
+    this.toggleButton = null;
+
     console.log('🚀 Starting init...');
     this.init();
   }
 
   async init() {
     await this.loadSettings();
+    this.createToolbar();
     this.detectProducts(); // Make sure this gets called
     this.setupScrollListener();
     this.setupMessageListener();
@@ -1206,6 +1211,159 @@ class ProductHighlighter {
         this.optimizedWeights = { keyword: 0.5, exact: 0.35, semantic: 0.15 };
         break;
     }
+  }
+
+  createToolbar() {
+    // Check if toolbar already exists
+    if (document.getElementById('ph-toolbar-container')) {
+      return;
+    }
+
+    // Create toolbar container
+    this.toolbar = document.createElement('div');
+    this.toolbar.id = 'ph-toolbar-container';
+    this.toolbar.className = 'ph-toolbar';
+
+    // Create prompt container (appears on hover when active)
+    const promptContainer = document.createElement('div');
+    promptContainer.className = 'ph-prompt-container';
+
+    // Create prompt input
+    const promptInput = document.createElement('input');
+    promptInput.type = 'text';
+    promptInput.className = 'ph-prompt-input';
+    promptInput.placeholder = 'Enter product search (e.g., "white sneakers")';
+    promptInput.value = this.userPrompt || '';
+
+    // Create toggle button
+    this.toggleButton = document.createElement('button');
+    this.toggleButton.className = 'ph-toggle-button';
+    this.toggleButton.setAttribute('aria-label', 'Toggle Product Highlighter');
+
+    // Set initial state
+    if (!this.isEnabled) {
+      this.toggleButton.classList.add('inactive');
+    }
+
+    // Add prompt input to container
+    promptContainer.appendChild(promptInput);
+
+    // Add click handler for toggle
+    this.toggleButton.addEventListener('click', (e) => {
+      // If toolbar is extended and clicking the button, just toggle without closing prompt
+      if (this.toolbar.classList.contains('extended')) {
+        e.stopPropagation();
+      }
+
+      this.handleToggle();
+
+      // Add ripple effect
+      this.toggleButton.classList.add('ripple');
+      setTimeout(() => {
+        this.toggleButton.classList.remove('ripple');
+      }, 600);
+    });
+
+    // Show prompt bar on hover (only when active)
+    this.toolbar.addEventListener('mouseenter', () => {
+      if (this.isEnabled) {
+        this.toolbar.classList.add('extended');
+        // Focus input after animation
+        setTimeout(() => {
+          promptInput.focus();
+        }, 300);
+      }
+    });
+
+    // Hide prompt bar when mouse leaves
+    this.toolbar.addEventListener('mouseleave', () => {
+      this.toolbar.classList.remove('extended');
+      // Save any changes made to the prompt
+      if (promptInput.value !== this.userPrompt) {
+        this.updatePrompt(promptInput.value);
+      }
+    });
+
+    // Handle prompt input
+    promptInput.addEventListener('input', (e) => {
+      // Update prompt in real-time for immediate feedback
+      this.userPrompt = e.target.value;
+    });
+
+    promptInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.updatePrompt(promptInput.value);
+        this.toolbar.classList.remove('extended');
+        promptInput.blur();
+      }
+    });
+
+    // Prevent toolbar from closing when interacting with input
+    promptInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Assemble toolbar
+    this.toolbar.appendChild(promptContainer);
+    this.toolbar.appendChild(this.toggleButton);
+
+    // Add to page
+    document.body.appendChild(this.toolbar);
+  }
+
+  updatePrompt(newPrompt) {
+    this.userPrompt = newPrompt;
+
+    // Save to storage
+    chrome.storage.sync.set({ userPrompt: this.userPrompt });
+
+    // Clear existing highlights
+    this.clearHighlights();
+
+    // Re-run detection with new prompt
+    if (this.isEnabled && this.userPrompt) {
+      this.detectProducts();
+    }
+
+    // Notify popup/background of the change
+    chrome.runtime.sendMessage({
+      action: 'updateSettings',
+      userPrompt: this.userPrompt
+    });
+  }
+
+  handleToggle() {
+    // Toggle the enabled state
+    this.isEnabled = !this.isEnabled;
+
+    // Update button appearance
+    if (this.isEnabled) {
+      this.toggleButton.classList.remove('inactive');
+    } else {
+      this.toggleButton.classList.add('inactive');
+      // Also hide the prompt bar when disabling
+      this.toolbar.classList.remove('extended');
+    }
+
+    // Save state to storage
+    chrome.storage.sync.set({ isEnabled: this.isEnabled });
+
+    // Handle highlighting
+    if (this.isEnabled) {
+      // Re-run detection when enabled
+      if (this.userPrompt) {
+        this.detectProducts();
+      }
+    } else {
+      // Clear all highlights when disabled
+      this.clearHighlights();
+    }
+
+    // Notify background script
+    chrome.runtime.sendMessage({
+      action: 'toggleHighlighter',
+      isEnabled: this.isEnabled
+    });
   }
 }
 

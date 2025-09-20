@@ -19,7 +19,7 @@
     {
       "matches": ["*://*/*"],
       "js": ["groq-enhancer.js", "content.js", "evaluator.js"],
-      "css": ["highlight.css", "feedback.css"]
+      "css": ["highlight.css", "feedback.css", "toolbar.css"]
     }
   ],
   "background": {
