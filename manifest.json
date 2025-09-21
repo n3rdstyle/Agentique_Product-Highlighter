@@ -11,10 +11,6 @@
   "host_permissions": [
     "*://*/*"
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Product Highlighter"
-  },
   "content_scripts": [
     {
       "matches": ["*://*/*"],

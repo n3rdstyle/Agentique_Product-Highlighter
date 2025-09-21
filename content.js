@@ -13,7 +13,7 @@ class ProductHighlighter {
     // Groq LLM integration
     console.log('🤖 Initializing GroqProductEnhancer...');
     this.groqEnhancer = new GroqProductEnhancer();
-    this.useGroq = false;
+    this.useGroq = true; // Always use Groq since we have hardcoded API key
 
     // Toolbar state
     this.toolbar = null;
@@ -35,15 +35,14 @@ class ProductHighlighter {
     try {
       const result = await chrome.storage.sync.get([
         'userPrompt', 'threshold', 'isEnabled',
-        'optimizedThreshold', 'highPerformingKeywords', 'problematicSites',
-        'groqApiKey', 'groqEnabled'
+        'optimizedThreshold', 'highPerformingKeywords', 'problematicSites'
       ]);
 
       this.userPrompt = result.userPrompt || '';
       this.threshold = result.optimizedThreshold || result.threshold || 0.6;
       this.isEnabled = result.isEnabled !== false;
       this.highPerformingKeywords = result.highPerformingKeywords || [];
-      this.useGroq = result.groqEnabled && !!result.groqApiKey;
+      this.useGroq = true; // Always use Groq since we have hardcoded API key
 
       if (result.problematicSites) {
         const currentDomain = window.location.hostname;
@@ -62,12 +61,11 @@ class ProductHighlighter {
         this.userPrompt = message.userPrompt || '';
         this.threshold = message.threshold || 0.6;
         this.isEnabled = message.isEnabled !== false;
-        this.useGroq = message.groqEnabled && !!message.groqApiKey;
+        this.useGroq = true; // Always use Groq
 
-        // Update Groq enhancer settings
+        // Groq enhancer is always enabled with hardcoded key
         if (this.groqEnhancer) {
-          this.groqEnhancer.apiKey = message.groqApiKey;
-          this.groqEnhancer.isEnabled = this.useGroq;
+          this.groqEnhancer.isEnabled = true;
           // Reset rate limiter on settings update
           this.groqEnhancer.rateLimiter = new RateLimiter(25, 60000);
         }

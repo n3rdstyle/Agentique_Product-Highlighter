@@ -5,10 +5,11 @@
 
 class GroqProductEnhancer {
   constructor() {
-    this.apiKey = null;
+    // Hardcoded API key - replace with your actual key
+    this.apiKey = 'gsk_YOUR_GROQ_API_KEY_HERE'; // TODO: Replace with actual Groq API key
     this.baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
     this.model = 'llama-3.1-8b-instant'; // Current fast model
-    this.isEnabled = false;
+    this.isEnabled = true; // Always enabled since we have the key
     this.cache = new Map(); // Cache LLM responses to reduce API calls
     this.batchQueue = []; // Queue for batching requests
     this.batchTimer = null;
@@ -78,21 +79,17 @@ class GroqProductEnhancer {
   }
 
   async loadSettings() {
-    try {
-      const result = await chrome.storage.sync.get(['groqApiKey', 'groqEnabled']);
-      this.apiKey = result.groqApiKey;
-      this.isEnabled = result.groqEnabled && !!this.apiKey;
+    // No longer need to load API key from storage since it's hardcoded
+    // Keep this method for potential future settings
+    this.isEnabled = true; // Always enabled with hardcoded key
 
-      // Reset rate limiter when settings change
-      this.rateLimiter.reset();
+    // Reset rate limiter when settings change
+    this.rateLimiter.reset();
 
-      // Test API connection if enabled
-      if (this.isEnabled) {
-        console.log('🧪 Testing Groq API connection...');
-        this.testAPIConnection();
-      }
-    } catch (error) {
-      console.log('Failed to load Groq settings:', error);
+    // Test API connection if enabled
+    if (this.isEnabled) {
+      console.log('🧪 Testing Groq API connection...');
+      this.testAPIConnection();
     }
   }
 
