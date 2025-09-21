@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["groq-enhancer.js", "content.js", "evaluator.js"],
+      "js": ["lightweight-embeddings.js", "rag-system.js", "vector-search.js", "groq-enhancer.js", "content.js", "evaluator.js"],
       "css": ["highlight.css", "feedback.css", "toolbar.css"]
     }
   ],

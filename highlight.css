@@ -1,75 +1,66 @@
-/* Modern highlighting styles with CSS custom properties */
-:root {
-  --highlight-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --highlight-strong: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --highlight-medium: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --highlight-glow-primary: rgba(102, 126, 234, 0.3);
-  --highlight-glow-strong: rgba(245, 87, 108, 0.4);
-  --highlight-glow-medium: rgba(79, 172, 254, 0.3);
-  --highlight-radius: 12px;
-  --highlight-border-width: 2px;
+/* MODERN BADGE DESIGN - UNIFIED AND SLEEK */
+
+/* Base product highlight styles */
+.product-highlight.modern-badge {
+  position: relative !important;
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transform: translateZ(0) !important;
+  border: 2px solid rgba(139, 92, 246, 0.3) !important;
+  border-radius: inherit !important;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, rgba(168, 85, 247, 0.03) 100%) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
-.product-highlight {
-  position: relative;
-  box-shadow: 0 4px 20px var(--highlight-glow-primary);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateZ(0);
+.product-highlight.modern-badge:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 16px 48px rgba(139, 92, 246, 0.25) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
 }
 
-.product-highlight:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 30px var(--highlight-glow-primary);
+/* Modern Badge - Unified Design for PERFECT, GREAT, and MATCH */
+.product-highlight.modern-badge::before,
+.product-highlight-medium.modern-badge::before,
+.product-highlight-strong.modern-badge::before {
+  content: "✓ MATCH" !important;
+  display: block !important;
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  color: white !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  z-index: 99999 !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  text-align: center !important;
+  backdrop-filter: blur(8px) !important;
 }
 
-.product-highlight::before {
-  content: "✨ Match";
-  position: absolute;
-  top: -12px;
-  left: 12px;
-  background: var(--highlight-primary);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* Unified styling for all highlight levels */
+.product-highlight-medium.modern-badge,
+.product-highlight-strong.modern-badge {
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15) !important;
+  border: 2px solid rgba(139, 92, 246, 0.3) !important;
+  border-radius: inherit !important;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, rgba(168, 85, 247, 0.03) 100%) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
-
-.product-highlight-strong {
-  box-shadow: 0 6px 25px var(--highlight-glow-strong);
+.product-highlight-medium.modern-badge:hover,
+.product-highlight-strong.modern-badge:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 16px 48px rgba(139, 92, 246, 0.25) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
 }
 
-.product-highlight-strong:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 12px 40px var(--highlight-glow-strong);
-}
-
-.product-highlight-strong::before {
-  content: "🎯 Perfect";
-  background: var(--highlight-strong);
-  animation: pulse 2s infinite;
-}
-
-.product-highlight-medium {
-  box-shadow: 0 4px 20px var(--highlight-glow-medium);
-}
-
-.product-highlight-medium:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 30px var(--highlight-glow-medium);
-}
-
-.product-highlight-medium::before {
-  content: "⭐ Great";
-  background: var(--highlight-medium);
-}
+/* Legacy fallback styles removed - using modern-badge only */
 
 /* Subtle pulse animation for strong matches */
 @keyframes pulse {
@@ -86,10 +77,10 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .product-highlight::before {
-    padding: 4px 8px;
-    font-size: 10px;
-    top: -10px;
-    left: 8px;
+    padding: 3px 8px;
+    font-size: 9px;
+    top: 6px;
+    left: 6px;
   }
 
   .product-highlight:hover {

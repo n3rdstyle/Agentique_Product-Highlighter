@@ -16,8 +16,9 @@
   /* Dynamic sizing variables */
   --button-size: 40px;
   --toolbar-padding: 12px;
-  --toolbar-width: calc(var(--button-size) + (var(--toolbar-padding) * 2));
-  --toolbar-height: calc(var(--button-size) + (var(--toolbar-padding) * 2));
+  --toolbar-border-width: 1px;
+  --toolbar-width: calc(var(--button-size) + (var(--toolbar-padding) * 2) + (var(--toolbar-border-width) * 2));
+  --toolbar-height: calc(var(--button-size) + (var(--toolbar-padding) * 2) + (var(--toolbar-border-width) * 2));
   --toolbar-radius: calc(var(--toolbar-height) / 2);
 }
 
@@ -28,6 +29,7 @@
   top: 50%;
   transform: translateY(-50%);
   width: var(--toolbar-width);
+  height: var(--toolbar-height);
   background: var(--toolbar-bg);
   border-radius: var(--toolbar-radius);
   padding: var(--toolbar-padding);
@@ -41,6 +43,7 @@
   align-items: center;
   gap: 12px;
   justify-content: flex-end;
+  box-sizing: border-box;
 }
 
 /* Extended state when prompt bar is visible */
@@ -95,6 +98,9 @@
   width: var(--button-size);
   height: var(--button-size);
   min-width: var(--button-size);
+  min-height: var(--button-size);
+  max-width: var(--button-size);
+  max-height: var(--button-size);
   border-radius: 50%;
   background: var(--button-active);
   border: none;
@@ -107,6 +113,8 @@
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* Button icon */

@@ -5,8 +5,8 @@
 
 class GroqProductEnhancer {
   constructor() {
-    // Hardcoded API key - replace with your actual key
-    this.apiKey = 'gsk_YOUR_GROQ_API_KEY_HERE'; // TODO: Replace with actual Groq API key
+    // API key - replace with your own Groq API key
+    this.apiKey = 'YOUR_GROQ_API_KEY_HERE';
     this.baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
     this.model = 'llama-3.1-8b-instant'; // Current fast model
     this.isEnabled = true; // Always enabled since we have the key
@@ -15,7 +15,7 @@ class GroqProductEnhancer {
     this.batchTimer = null;
     this.batchSize = 5; // Process 5 products at once
     this.batchDelay = 50; // 50ms delay to collect items for batching
-    this.rateLimiter = new RateLimiter(25, 60000); // 25 calls per minute - closer to Groq's 30 RPM limit
+    // Rate limiter removed - no limits
 
     // Smart usage tracking
     this.usageStats = {
@@ -83,9 +83,6 @@ class GroqProductEnhancer {
     // Keep this method for potential future settings
     this.isEnabled = true; // Always enabled with hardcoded key
 
-    // Reset rate limiter when settings change
-    this.rateLimiter.reset();
-
     // Test API connection if enabled
     if (this.isEnabled) {
       console.log('🧪 Testing Groq API connection...');
@@ -137,14 +134,7 @@ class GroqProductEnhancer {
     // Estimate tokens for batch request
     const estimatedTokens = Math.min(uncachedProducts.length * 100 + 200, 1000);
 
-    // Batch evaluate uncached products
-    if (!this.rateLimiter.canMakeRequest(estimatedTokens)) {
-      // If rate limited, return very low scores to avoid false positives
-      uncachedIndices.forEach(index => {
-        results[index] = 0.1; // Low default to prevent highlighting everything
-      });
-      return results;
-    }
+    // Batch evaluate uncached products - no rate limiting
 
     try {
       const prompt = this.createBatchEvaluationPrompt(uncachedProducts, userQuery);
@@ -217,11 +207,7 @@ class GroqProductEnhancer {
 
     const batch = this.batchQueue.splice(0, this.batchSize);
 
-    if (!this.rateLimiter.canMakeRequest()) {
-      // Rate limited - return low scores to avoid false positives
-      batch.forEach(item => item.resolve(0.1));
-      return;
-    }
+    // No rate limiting - process all requests
 
     try {
       const products = batch.map(item => ({ text: item.text }));
@@ -249,7 +235,7 @@ class GroqProductEnhancer {
    * SMART HYBRID: Intelligent product detection for ambiguous elements
    */
   async smartProductDetection(element, userQuery) {
-    if (!this.isEnabled || !this.rateLimiter.canMakeRequest()) {
+    if (!this.isEnabled) {
       return null;
     }
 
@@ -279,7 +265,7 @@ class GroqProductEnhancer {
    * Enhanced product understanding for complex queries
    */
   async deepProductAnalysis(productText, userQuery, ruleBasedScore) {
-    if (!this.isEnabled || !this.rateLimiter.canMakeRequest()) {
+    if (!this.isEnabled) {
       return ruleBasedScore;
     }
 
@@ -733,62 +719,7 @@ Respond with JSON:
   }
 }
 
-/**
- * Token-aware rate limiter to prevent API abuse
- */
-class RateLimiter {
-  constructor(maxRequests, windowMs) {
-    this.maxRequests = maxRequests;
-    this.windowMs = windowMs;
-    this.requests = [];
-    this.tokensUsed = [];
-    this.maxTokensPerMinute = 5500; // Stay safely under Groq's 6000 TPM limit
-  }
-
-  canMakeRequest(estimatedTokens = 300) {
-    const now = Date.now();
-
-    // Remove old requests outside the window
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
-    this.tokensUsed = this.tokensUsed.filter(entry => now - entry.time < this.windowMs);
-
-    // Check both request count and token usage
-    const currentTokens = this.tokensUsed.reduce((sum, entry) => sum + entry.tokens, 0);
-
-    // More lenient: allow requests unless we're clearly over the limit
-    const requestsOk = this.requests.length < this.maxRequests;
-    const tokensOk = currentTokens + estimatedTokens <= this.maxTokensPerMinute;
-
-    if (requestsOk && tokensOk) {
-      this.requests.push(now);
-      this.tokensUsed.push({ time: now, tokens: estimatedTokens });
-      console.log(`✅ Rate limit OK: ${this.requests.length}/${this.maxRequests} requests, ${currentTokens + estimatedTokens}/${this.maxTokensPerMinute} tokens`);
-      return true;
-    }
-
-    console.log(`🚫 Rate limited: ${this.requests.length}/${this.maxRequests} requests, ${currentTokens + estimatedTokens}/${this.maxTokensPerMinute} tokens`);
-    return false;
-  }
-
-  getRemainingCapacity() {
-    const now = Date.now();
-    this.requests = this.requests.filter(time => now - time < this.windowMs);
-    this.tokensUsed = this.tokensUsed.filter(entry => now - entry.time < this.windowMs);
-
-    const currentTokens = this.tokensUsed.reduce((sum, entry) => sum + entry.tokens, 0);
-    return {
-      requests: this.maxRequests - this.requests.length,
-      tokens: this.maxTokensPerMinute - currentTokens
-    };
-  }
-
-  reset() {
-    // Clear rate limiting history
-    this.requests = [];
-    this.tokensUsed = [];
-    console.log('🔄 Rate limiter reset - fresh start');
-  }
-}
+// Rate limiter removed - no API limits enforced
 
 // Export for use in content script
 if (typeof module !== 'undefined' && module.exports) {

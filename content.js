@@ -6,25 +6,39 @@ class ProductHighlighter {
     this.threshold = 0.6;
     this.isEnabled = true;
     this.highlightedElements = new Set();
+    this.processedProducts = new Set(); // Track processed product IDs/signatures
     this.optimizedWeights = { keyword: 0.4, exact: 0.3, semantic: 0.3 };
     this.highPerformingKeywords = [];
     this.siteSpecificRules = new Map();
 
-    // Groq LLM integration
+    // RAG system integration
+    console.log('🧠 Initializing RAG System...');
+    this.ragSystem = new ProductRAGSystem();
+
+    // Vector search integration (fallback)
+    console.log('🔍 Initializing Vector Search...');
+    this.vectorSearch = new VectorProductSearch();
+
+    // Groq LLM integration (for verification only)
     console.log('🤖 Initializing GroqProductEnhancer...');
     this.groqEnhancer = new GroqProductEnhancer();
+    window.groqProductEnhancer = this.groqEnhancer;
     this.useGroq = true; // Always use Groq since we have hardcoded API key
 
     // Toolbar state
     this.toolbar = null;
     this.toggleButton = null;
+    this.isCapturing = false;
+    this.captureCompleted = false;
 
     console.log('🚀 Starting init...');
     this.init();
   }
 
   async init() {
+    console.log('🔄 Init started');
     await this.loadSettings();
+    console.log('⚙️ Settings loaded, creating toolbar...');
     this.createToolbar();
     this.detectProducts(); // Make sure this gets called
     this.setupScrollListener();
@@ -66,8 +80,7 @@ class ProductHighlighter {
         // Groq enhancer is always enabled with hardcoded key
         if (this.groqEnhancer) {
           this.groqEnhancer.isEnabled = true;
-          // Reset rate limiter on settings update
-          this.groqEnhancer.rateLimiter = new RateLimiter(25, 60000);
+          // No rate limiting anymore
         }
 
         this.clearHighlights();
@@ -91,9 +104,9 @@ class ProductHighlighter {
         if (this.isEnabled && this.userPrompt) {
           const now = Date.now();
           if (now - lastScrollRun > scrollCooldown) {
-            console.log('🔄 Scroll detected, running product detection...');
+            console.log('🔄 Scroll detected, checking for NEW products...');
             lastScrollRun = now;
-            this.detectProducts();
+            this.detectNewProducts(); // Only detect NEW products
           } else {
             console.log('⏳ Scroll detection skipped (cooldown active)');
           }
@@ -114,38 +127,435 @@ class ProductHighlighter {
     }
 
     try {
-      // Phase 1: Rule-based detection (fast, free)
-      console.log('Phase 1: Rule-based detection...');
-      const ruleBasedProducts = this.getRuleBasedProducts();
-      console.log(`Found ${ruleBasedProducts.length} rule-based products`);
+      // NEW RAG APPROACH: Retrieval-Augmented Generation
+      console.log('🧠 Using RAG system for product detection...');
 
-      if (ruleBasedProducts.length === 0) {
-        console.log('❌ No rule-based products found!');
-        return;
+      // Phase 1: Capture and process products for RAG knowledge base (only once)
+      if (!this.captureCompleted) {
+        await this.captureAndIndexProductsForRAG();
+        this.captureCompleted = true;
       }
 
-      // Phase 2: Smart LLM enhancement for ambiguous cases
-      console.log('Phase 2: Smart enhancement...');
-      const enhancedProducts = await this.smartProductEnhancement(ruleBasedProducts);
-      console.log(`Enhanced to ${enhancedProducts.length} products`);
+      // Phase 2: RAG-based search and generation
+      console.log('🔍 Phase 2: RAG retrieval and generation...');
+      const ragResults = await this.ragSystem.generateWithRAG(this.userPrompt);
+      console.log(`Found ${ragResults.matches.length} matches via RAG system`);
 
-      // Phase 3: Analyze all discovered products
-      console.log('Phase 3: Analyzing products...');
+      // Phase 3: Highlight matched products
+      console.log('✅ Phase 3: Highlighting RAG matches...');
+      await this.highlightRAGMatches(ragResults.matches);
 
-      // FULL LLM MODE: Batch process for efficiency
-      if (this.useGroq && this.groqEnhancer) {
-        await this.batchAnalyzeProducts(enhancedProducts);
-      } else {
-        // Fallback to individual analysis if no LLM
-        const analysisPromises = enhancedProducts.map(element => this.analyzeProduct(element));
-        await Promise.all(analysisPromises);
-      }
+      // Phase 4: Mark all current products as processed
+      console.log('📝 Phase 4: Marking all current products as processed...');
+      this.markAllCurrentProductsAsProcessed();
 
-      console.log('✅ Product detection complete');
+      console.log('✅ RAG-based product detection complete');
 
     } catch (error) {
-      console.error('❌ detectProducts failed:', error);
+      console.error('❌ RAG detection failed, falling back to vector search:', error);
+      // Fallback to vector search if RAG fails
+      await this.fallbackToVectorSearch();
     }
+  }
+
+  async captureAndIndexProductsForRAG() {
+    if (this.isCapturing) return;
+
+    this.isCapturing = true;
+    console.log('📸 Starting product capture for RAG knowledge base...');
+
+    // Show progress indicator
+    this.showCaptureProgress();
+
+    try {
+      // Capture all products using vector search
+      const products = await this.vectorSearch.captureAllProducts((progress) => {
+        console.log(`📊 Capture progress: ${progress.percentage}% (${progress.captured} products)`);
+        this.updateCaptureProgress(progress);
+      });
+
+      // Process products for RAG system
+      console.log('🧠 Processing products for RAG knowledge base...');
+      await this.ragSystem.processProductsForRAG(products);
+
+      console.log('✅ RAG knowledge base created');
+    } finally {
+      this.isCapturing = false;
+      this.hideCaptureProgress();
+    }
+  }
+
+  async highlightRAGMatches(matches) {
+    console.log(`🎯 Highlighting ${matches.length} RAG matches`);
+
+    // Track processed products to avoid duplicates
+    const processedProducts = new Set();
+    let successfulHighlights = 0;
+
+    for (const match of matches) {
+      try {
+        // Skip if we already processed this product
+        if (processedProducts.has(match.productId)) {
+          console.log(`⏭️ Skipping duplicate product: ${match.productId}`);
+          continue;
+        }
+
+        processedProducts.add(match.productId);
+
+        // Find the DOM element for this product
+        const element = await this.findProductElement(match);
+        if (element) {
+          // Check if element is already highlighted
+          if (element.classList.contains('modern-badge')) {
+            console.log(`⏭️ Element already highlighted: ${match.title}`);
+            continue;
+          }
+
+          this.highlightElement(element, {
+            reason: match.reason,
+            confidence: match.confidence,
+            retrievalScore: match.retrievalScore
+          });
+          successfulHighlights++;
+        } else {
+          console.warn(`❌ Could not find DOM element for: ${match.title}`);
+        }
+      } catch (error) {
+        console.error('❌ Failed to highlight RAG match:', error, match);
+      }
+    }
+
+    console.log(`✅ Successfully highlighted ${successfulHighlights}/${matches.length} products`);
+  }
+
+  async findProductElement(productMeta) {
+    console.log(`🔍 Finding element for product: ${productMeta.title}`);
+    console.log(`📊 Element info available:`, productMeta.elementInfo);
+
+    // Method 1: Use stored element info if available (most accurate)
+    if (productMeta.elementInfo) {
+      const { tag, classes, index } = productMeta.elementInfo;
+
+      if (tag && classes) {
+        // Try to find by tag, classes, and position
+        const selector = `${tag.toLowerCase()}${classes ? '.' + classes.split(' ').join('.') : ''}`;
+        const elements = document.querySelectorAll(selector);
+
+        if (elements.length > 0) {
+          // If index is provided, try to get exact element
+          if (typeof index === 'number' && elements[index]) {
+            const candidateElement = elements[index];
+            const text = candidateElement.textContent?.toLowerCase() || '';
+            const title = productMeta.title?.toLowerCase() || '';
+
+            // Verify this is still the right element by checking title match
+            if (title && text.includes(title.substring(0, Math.min(20, title.length)))) {
+              console.log(`✅ Found element by stored metadata: ${productMeta.title}`);
+              return candidateElement;
+            }
+          }
+
+          // Fallback: find the best match among elements with same tag/classes
+          for (const element of elements) {
+            const text = element.textContent?.toLowerCase() || '';
+            const title = productMeta.title?.toLowerCase() || '';
+
+            if (title && text.includes(title.substring(0, Math.min(20, title.length)))) {
+              console.log(`✅ Found element by tag/classes fallback: ${productMeta.title}`);
+              return element;
+            }
+          }
+        }
+      }
+    }
+
+    // Method 2: Intelligent text matching with multiple selectors
+    const productSelectors = [
+      'article',
+      'a[href*="/"]',
+      '[class*="product"]',
+      '[class*="item"]',
+      '[data-testid*="product"]'
+    ];
+
+    const title = productMeta.title?.toLowerCase() || '';
+    const brand = productMeta.brand?.toLowerCase() || '';
+    const price = productMeta.price || '';
+
+    for (const selector of productSelectors) {
+      const elements = document.querySelectorAll(selector);
+
+      for (const element of elements) {
+        const text = element.textContent?.toLowerCase() || '';
+
+        // Multi-factor matching for better accuracy
+        let matchScore = 0;
+
+        // Title matching (most important)
+        if (title && title.length > 3) {
+          const titleWords = title.split(/\s+/).filter(w => w.length > 2);
+          const matchingWords = titleWords.filter(word => text.includes(word));
+          matchScore += (matchingWords.length / titleWords.length) * 0.7;
+        }
+
+        // Brand matching
+        if (brand && text.includes(brand)) {
+          matchScore += 0.2;
+        }
+
+        // Price matching
+        if (price && text.includes(price.toString())) {
+          matchScore += 0.1;
+        }
+
+        // Require at least 60% match confidence
+        if (matchScore >= 0.6) {
+          console.log(`✅ Found element with ${(matchScore * 100).toFixed(1)}% confidence: ${productMeta.title}`);
+          return element;
+        }
+      }
+    }
+
+    console.warn(`⚠️ Could not find element for: ${productMeta.title} (tried ${productSelectors.length} selector types)`);
+    return null;
+  }
+
+  highlightElement(element, options = {}) {
+    if (!element) return;
+
+    // Skip if already highlighted to preserve existing highlights
+    if (element.classList.contains('modern-badge')) {
+      console.log('⏭️ Element already highlighted, skipping...');
+      return;
+    }
+
+    // Remove any existing highlighting classes (only if not already highlighted)
+    element.classList.remove('product-highlight', 'product-highlight-strong', 'product-highlight-medium');
+
+    // Determine highlight strength based on confidence
+    const confidence = options.confidence || 0;
+    let highlightClass = 'product-highlight';
+
+    if (confidence >= 0.8) {
+      highlightClass = 'product-highlight-strong';
+    } else if (confidence >= 0.6) {
+      highlightClass = 'product-highlight-medium';
+    }
+
+    // Apply the highlight class AND the modern badge class
+    element.classList.add(highlightClass, 'modern-badge');
+
+    // Store match information for tooltips/debugging
+    element.setAttribute('data-match-confidence', confidence.toFixed(3));
+    element.setAttribute('data-match-reason', options.reason || '');
+
+    console.log(`✨ Highlighted NEW element with modern badge: ${highlightClass}, confidence: ${confidence.toFixed(3)}`);
+  }
+
+  /**
+   * Only detect and highlight NEW products (for scroll/infinite scroll)
+   */
+  async detectNewProducts() {
+    if (!this.userPrompt || !this.isEnabled) {
+      console.log('❌ Early exit: no prompt or disabled');
+      return;
+    }
+
+    console.log('🆕 Detecting only NEW products...');
+
+    // Get all current products on page
+    const currentProducts = this.getAllProductsOnPage();
+    const newProducts = [];
+
+    // Filter out already processed products
+    for (const product of currentProducts) {
+      const productSignature = this.getProductSignature(product);
+      if (!this.processedProducts.has(productSignature)) {
+        newProducts.push(product);
+        this.processedProducts.add(productSignature);
+      }
+    }
+
+    console.log(`📊 Found ${newProducts.length} NEW products out of ${currentProducts.length} total`);
+
+    if (newProducts.length === 0) {
+      console.log('✅ No new products to process');
+      return;
+    }
+
+    // Process only new products with RAG system
+    try {
+      const ragResponse = await this.ragSystem.generateWithRAG(this.userPrompt);
+
+      console.log(`🎯 Highlighting ${ragResponse.matches.length} RAG matches`);
+      await this.highlightRAGMatches(ragResponse.matches);
+
+    } catch (error) {
+      console.error('❌ New product detection failed:', error);
+    }
+  }
+
+  /**
+   * Get a unique signature for a product to track if we've seen it
+   */
+  getProductSignature(product) {
+    // Use title + price + first 50 chars of text as signature
+    const title = product.title || '';
+    const price = product.price || '';
+    const text = (product.text || '').substring(0, 50);
+    return `${title}|${price}|${text}`.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Get all products currently visible on page
+   */
+  getAllProductsOnPage() {
+    const products = [];
+    const selectors = ['article', 'a[href*="/"]'];
+
+    for (const selector of selectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const title = element.textContent?.trim() || '';
+        if (title.length > 10) { // Basic filter for actual products
+          products.push({
+            title: title.substring(0, 100),
+            text: title,
+            element: element
+          });
+        }
+      }
+    }
+
+    return products;
+  }
+
+  /**
+   * Find DOM element by product metadata
+   */
+  findElementByProduct(productMeta) {
+    const selectors = ['article', 'a[href*="/"]'];
+
+    for (const selector of selectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const elementText = element.textContent?.trim() || '';
+        if (elementText.includes(productMeta.title?.substring(0, 20))) {
+          return element;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Mark all products currently on page as processed to avoid re-processing on scroll
+   */
+  markAllCurrentProductsAsProcessed() {
+    const currentProducts = this.getAllProductsOnPage();
+    let marked = 0;
+
+    for (const product of currentProducts) {
+      const productSignature = this.getProductSignature(product);
+      if (!this.processedProducts.has(productSignature)) {
+        this.processedProducts.add(productSignature);
+        marked++;
+      }
+    }
+
+    console.log(`📝 Marked ${marked} products as processed (total tracked: ${this.processedProducts.size})`);
+  }
+
+  async fallbackToVectorSearch() {
+    console.log('🔄 Falling back to vector search method...');
+
+    try {
+      // Phase 1: Capture all products if not done yet
+      if (!this.isCapturing) {
+        await this.captureAndIndexProducts();
+      }
+
+      // Phase 2: Vector similarity search
+      console.log('🔍 Vector similarity search...');
+      const topMatches = await this.vectorSearch.searchProducts(this.userPrompt, 20);
+      console.log(`Found ${topMatches.length} potential matches via vector search`);
+
+      // Phase 3: Use LLM only for top matches verification
+      console.log('✅ LLM verification of top matches...');
+      await this.verifyTopMatchesWithLLM(topMatches);
+
+      console.log('✅ Fallback detection complete');
+
+    } catch (error) {
+      console.error('❌ Fallback to vector search also failed:', error);
+    }
+  }
+
+  async captureAndIndexProducts() {
+    if (this.isCapturing) return;
+
+    this.isCapturing = true;
+    console.log('📸 Starting product capture and indexing...');
+
+    // Show progress indicator
+    this.showCaptureProgress();
+
+    try {
+      // Auto-scroll and capture all products
+      await this.vectorSearch.captureAllProducts((progress) => {
+        console.log(`📊 Capture progress: ${progress.percentage}% (${progress.captured} products)`);
+        this.updateCaptureProgress(progress);
+      });
+
+      console.log('✅ Product capture complete');
+    } finally {
+      this.hideCaptureProgress();
+    }
+  }
+
+  async verifyTopMatchesWithLLM(topMatches) {
+    // Only verify matches with high similarity scores
+    const candidatesForLLM = topMatches.filter(match => match.similarity > 0.2);
+    console.log(`🤖 Verifying ${candidatesForLLM.length} candidates with LLM`);
+
+    if (candidatesForLLM.length === 0) {
+      console.log('❌ No good matches found via vector search');
+      return;
+    }
+
+    // Batch verify with Groq LLM (much more cost-effective)
+    const verifiedProducts = [];
+
+    for (const candidate of candidatesForLLM.slice(0, 10)) { // Max 10 LLM calls
+      try {
+        const llmScore = await this.groqEnhancer.evaluateProduct(candidate.text, this.userPrompt);
+
+        if (llmScore >= this.threshold) {
+          verifiedProducts.push({
+            element: candidate.element,
+            score: llmScore,
+            vectorScore: candidate.similarity
+          });
+        }
+      } catch (error) {
+        console.error('LLM verification failed for product:', error);
+      }
+    }
+
+    // Highlight verified products
+    console.log(`✅ Highlighting ${verifiedProducts.length} verified products`);
+    verifiedProducts.forEach(product => {
+      if (product.element) {
+        this.highlightProduct(product.element, product.score);
+        this.highlightedElements.add(product.element);
+      }
+    });
+  }
+
+  // Keep old method as fallback
+  async detectProductsLegacy() {
+    console.log('⚠️ Falling back to legacy detection method...');
+    // [Previous detection code here]
   }
 
 
@@ -261,8 +671,8 @@ class ProductHighlighter {
     // 3. User has Groq enabled
     // 4. API rate limit allows it
 
-    if (!this.useGroq || !this.groqEnhancer.rateLimiter.canMakeRequest()) {
-      console.log('⚠️ Skipping LLM detection: disabled or rate limited');
+    if (!this.useGroq) {
+      console.log('⚠️ Skipping LLM detection: disabled');
       return false;
     }
 
@@ -500,12 +910,6 @@ class ProductHighlighter {
   // Batch analyze products for better LLM efficiency
   async batchAnalyzeProducts(elements) {
     console.log(`🚀 Batch analyzing ${elements.length} products with LLM`);
-
-    // Check rate limit before processing
-    if (!this.groqEnhancer.rateLimiter.canMakeRequest()) {
-      console.log('🚫 Rate limited - skipping LLM batch analysis completely');
-      return;
-    }
 
     // Extract product info for all elements
     const products = elements.map(element => ({
@@ -1212,8 +1616,17 @@ class ProductHighlighter {
   }
 
   createToolbar() {
+    console.log('🔧 Creating toolbar...');
+
     // Check if toolbar already exists
     if (document.getElementById('ph-toolbar-container')) {
+      console.log('⚠️ Toolbar already exists, skipping creation');
+      return;
+    }
+
+    console.log('📐 Body element:', document.body);
+    if (!document.body) {
+      console.error('❌ document.body not available!');
       return;
     }
 
@@ -1230,7 +1643,7 @@ class ProductHighlighter {
     const promptInput = document.createElement('input');
     promptInput.type = 'text';
     promptInput.className = 'ph-prompt-input';
-    promptInput.placeholder = 'Enter product search (e.g., "white sneakers")';
+    promptInput.placeholder = 'I search for white sneakers.';
     promptInput.value = this.userPrompt || '';
 
     // Create toggle button
@@ -1306,7 +1719,29 @@ class ProductHighlighter {
     this.toolbar.appendChild(this.toggleButton);
 
     // Add to page
-    document.body.appendChild(this.toolbar);
+    console.log('➕ Adding toolbar to page...');
+    try {
+      document.body.appendChild(this.toolbar);
+      console.log('✅ Toolbar successfully added to page');
+
+      // Force a style recalculation to ensure CSS is applied
+      this.toolbar.offsetHeight;
+
+      // Log computed styles for debugging
+      const computedStyle = window.getComputedStyle(this.toolbar);
+      console.log('🎨 Toolbar styles:', {
+        position: computedStyle.position,
+        right: computedStyle.right,
+        top: computedStyle.top,
+        width: computedStyle.width,
+        height: computedStyle.height,
+        display: computedStyle.display,
+        visibility: computedStyle.visibility,
+        zIndex: computedStyle.zIndex
+      });
+    } catch (error) {
+      console.error('❌ Failed to add toolbar:', error);
+    }
   }
 
   updatePrompt(newPrompt) {
@@ -1355,6 +1790,8 @@ class ProductHighlighter {
     } else {
       // Clear all highlights when disabled
       this.clearHighlights();
+      // Reset capture state
+      this.isCapturing = false;
     }
 
     // Notify background script
@@ -1363,16 +1800,103 @@ class ProductHighlighter {
       isEnabled: this.isEnabled
     });
   }
+
+  showCaptureProgress() {
+    // Create progress overlay
+    const progressOverlay = document.createElement('div');
+    progressOverlay.id = 'ph-capture-progress';
+    progressOverlay.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 30px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      z-index: 1000000;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    `;
+
+    progressOverlay.innerHTML = `
+      <div style="
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      "></div>
+      <div>
+        <div id="ph-progress-text">Scanning products...</div>
+        <div id="ph-progress-stats" style="font-size: 12px; opacity: 0.9; margin-top: 4px;">
+          0% complete • 0 products found
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+
+    document.body.appendChild(progressOverlay);
+  }
+
+  updateCaptureProgress(progress) {
+    const statsElement = document.getElementById('ph-progress-stats');
+    if (statsElement) {
+      statsElement.textContent = `${progress.percentage}% complete • ${progress.captured} products found`;
+    }
+  }
+
+  hideCaptureProgress() {
+    const progressOverlay = document.getElementById('ph-capture-progress');
+    if (progressOverlay) {
+      progressOverlay.style.animation = 'fadeOut 0.3s ease-out';
+      setTimeout(() => progressOverlay.remove(), 300);
+    }
+  }
 }
 
 console.log('🚀 Content script loading...', { readyState: document.readyState });
 
+// Create global instance variable
+let productHighlighterInstance = null;
+
+function initializeProductHighlighter() {
+  if (productHighlighterInstance) {
+    console.log('⚠️ ProductHighlighter already initialized');
+    return;
+  }
+
+  console.log('📄 Creating ProductHighlighter instance...');
+  productHighlighterInstance = new ProductHighlighter();
+
+  // Verify toolbar was created
+  setTimeout(() => {
+    const toolbar = document.getElementById('ph-toolbar-container');
+    if (!toolbar) {
+      console.error('❌ Toolbar not found after initialization! Retrying...');
+      if (productHighlighterInstance) {
+        productHighlighterInstance.createToolbar();
+      }
+    } else {
+      console.log('✅ Toolbar confirmed in DOM');
+    }
+  }, 1000);
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOMContentLoaded - Creating ProductHighlighter...');
-    new ProductHighlighter();
-  });
+  document.addEventListener('DOMContentLoaded', initializeProductHighlighter);
 } else {
-  console.log('📄 Document ready - Creating ProductHighlighter...');
-  new ProductHighlighter();
+  // Document already loaded, init immediately
+  initializeProductHighlighter();
 }

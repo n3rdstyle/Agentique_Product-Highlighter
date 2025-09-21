@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Lightweight Embeddings</title>
+</head>
+<body>
+    <h1>Testing Lightweight Embeddings</h1>
+    <div id="output"></div>
+
+    <script src="lightweight-embeddings.js"></script>
+    <script>
+        const output = document.getElementById('output');
+
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+
+        // Test the lightweight embedding system
+        try {
+            log('🔄 Testing lightweight embeddings...');
+
+            const embedder = new LightweightEmbeddings();
+            log('✅ LightweightEmbeddings instance created');
+
+            // Test semantic similarity
+            const text1 = "white sneakers";
+            const text2 = "Nike - Sneaker low - white";
+            const text3 = "PULL&BEAR - Sneaker low - grey";
+
+            const emb1 = embedder.generateSentenceEmbedding(text1);
+            const emb2 = embedder.generateSentenceEmbedding(text2);
+            const emb3 = embedder.generateSentenceEmbedding(text3);
+
+            log(`Generated embedding for "${text1}": ${emb1.length} dimensions`);
+            log(`Generated embedding for "${text2}": ${emb2.length} dimensions`);
+            log(`Generated embedding for "${text3}": ${emb3.length} dimensions`);
+
+            // Calculate similarities
+            const sim1_2 = embedder.cosineSimilarity(emb1, emb2);
+            const sim1_3 = embedder.cosineSimilarity(emb1, emb3);
+
+            log(`Similarity between "${text1}" and "${text2}": ${sim1_2.toFixed(3)}`);
+            log(`Similarity between "${text1}" and "${text3}": ${sim1_3.toFixed(3)}`);
+
+            if (sim1_2 > sim1_3) {
+                log('✅ Correct: White sneakers is more similar to white sneakers than grey sneakers');
+            } else {
+                log('❌ Error: Similarity ranking is incorrect');
+            }
+
+        } catch (error) {
+            log('❌ Error: ' + error.message);
+        }
+    </script>
+</body>
+</html>
