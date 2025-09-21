@@ -25,7 +25,7 @@
 /* Main toolbar container */
 .ph-toolbar {
   position: fixed;
-  right: 20px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   width: var(--toolbar-width);
@@ -36,7 +36,7 @@
   box-shadow: var(--toolbar-shadow);
   backdrop-filter: blur(10px);
   z-index: 999999;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--toolbar-border);
   display: flex;
   flex-direction: row;
@@ -44,6 +44,12 @@
   gap: 12px;
   justify-content: flex-end;
   box-sizing: border-box;
+}
+
+/* Hidden state - toolbar slides out of view */
+.ph-toolbar.hidden {
+  right: -84px;
+  opacity: 0.3;
 }
 
 /* Extended state when prompt bar is visible */
@@ -196,6 +202,10 @@
     padding: 6px;
   }
 
+  .ph-toolbar.hidden {
+    right: -60px;
+  }
+
   .ph-toolbar.extended {
     width: calc(100vw - 40px);
     max-width: 350px;
@@ -216,6 +226,16 @@
     font-size: 13px;
     padding: 8px 12px;
   }
+
+  .ph-edge-tab {
+    width: 6px;
+    height: 50px;
+  }
+
+  .ph-edge-tab.visible:hover {
+    width: 10px;
+  }
+
 }
 
 /* Minimized state for toolbar */
@@ -239,3 +259,42 @@
 .ph-toolbar {
   animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Edge tab - appears when toolbar is hidden */
+.ph-edge-tab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px 0 0 8px;
+  cursor: pointer;
+  z-index: 999998;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Edge tab visible state */
+.ph-edge-tab.visible {
+  opacity: 0.8;
+  pointer-events: auto;
+}
+
+/* Edge tab hidden state - completely remove from interaction */
+.ph-edge-tab:not(.visible) {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.ph-edge-tab.visible:hover {
+  opacity: 1;
+  width: 12px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Edge tab - clean design without icon */

@@ -4,7 +4,7 @@ class ProductHighlighter {
 
     this.userPrompt = '';
     this.threshold = 0.6;
-    this.isEnabled = true;
+    this.isEnabled = false; // Start deactivated by default on new websites
     this.highlightedElements = new Set();
     this.processedProducts = new Set(); // Track processed product IDs/signatures
     this.optimizedWeights = { keyword: 0.4, exact: 0.3, semantic: 0.3 };
@@ -28,6 +28,8 @@ class ProductHighlighter {
     // Toolbar state
     this.toolbar = null;
     this.toggleButton = null;
+    this.edgeTab = null;
+    this.autoCollapseTimer = null;
     this.isCapturing = false;
     this.captureCompleted = false;
 
@@ -54,7 +56,7 @@ class ProductHighlighter {
 
       this.userPrompt = result.userPrompt || '';
       this.threshold = result.optimizedThreshold || result.threshold || 0.6;
-      this.isEnabled = result.isEnabled !== false;
+      this.isEnabled = false; // Always start deactivated on website entry
       this.highPerformingKeywords = result.highPerformingKeywords || [];
       this.useGroq = true; // Always use Groq since we have hardcoded API key
 
@@ -1580,11 +1582,31 @@ class ProductHighlighter {
   }
 
   clearHighlights() {
+    // Remove all highlight classes including modern-badge
     this.highlightedElements.forEach(element => {
-      element.classList.remove('product-highlight', 'product-highlight-strong', 'product-highlight-medium');
+      element.classList.remove(
+        'product-highlight',
+        'product-highlight-strong',
+        'product-highlight-medium',
+        'modern-badge'
+      );
       element.removeAttribute('data-match-score');
     });
     this.highlightedElements.clear();
+
+    // Also clear any elements that might have been highlighted outside the tracked set
+    const allHighlighted = document.querySelectorAll('.product-highlight, .product-highlight-strong, .product-highlight-medium, .modern-badge');
+    allHighlighted.forEach(element => {
+      element.classList.remove(
+        'product-highlight',
+        'product-highlight-strong',
+        'product-highlight-medium',
+        'modern-badge'
+      );
+      element.removeAttribute('data-match-score');
+    });
+
+    console.log(`🧹 Cleared ${allHighlighted.length} highlighted elements`);
   }
 
   applySiteSpecificOptimizations(domain) {
@@ -1675,23 +1697,31 @@ class ProductHighlighter {
       }, 600);
     });
 
-    // Show prompt bar on hover (only when active)
-    this.toolbar.addEventListener('mouseenter', () => {
-      if (this.isEnabled) {
+    // Show search bar on button hover (only if there's a query)
+    this.toggleButton.addEventListener('mouseenter', () => {
+      if (this.isEnabled && this.userPrompt && this.userPrompt.trim().length > 0) {
         this.toolbar.classList.add('extended');
-        // Focus input after animation
-        setTimeout(() => {
-          promptInput.focus();
-        }, 300);
       }
     });
 
-    // Hide prompt bar when mouse leaves
+    // Hide search bar when mouse leaves button (if extended by hover)
+    this.toggleButton.addEventListener('mouseleave', () => {
+      // Only collapse if we're not actively typing AND no auto-collapse timer is active
+      const promptInput = this.toolbar.querySelector('.ph-prompt-input');
+      if (!this.autoCollapseTimer && (!promptInput || document.activeElement !== promptInput)) {
+        this.toolbar.classList.remove('extended');
+      }
+    });
+
+    // Also hide when mouse leaves the entire toolbar (unless input is focused or timer is active)
     this.toolbar.addEventListener('mouseleave', () => {
-      this.toolbar.classList.remove('extended');
-      // Save any changes made to the prompt
-      if (promptInput.value !== this.userPrompt) {
-        this.updatePrompt(promptInput.value);
+      const promptInput = this.toolbar.querySelector('.ph-prompt-input');
+      if (!this.autoCollapseTimer && (!promptInput || document.activeElement !== promptInput)) {
+        this.toolbar.classList.remove('extended');
+        // Save any changes made to the prompt
+        if (promptInput && promptInput.value !== this.userPrompt) {
+          this.updatePrompt(promptInput.value);
+        }
       }
     });
 
@@ -1709,9 +1739,37 @@ class ProductHighlighter {
       }
     });
 
+    // Collapse search bar when input loses focus (after typing)
+    promptInput.addEventListener('blur', () => {
+      // Only collapse if no auto-collapse timer is active
+      if (!this.autoCollapseTimer) {
+        // Small delay to allow mouse leave events to be processed first
+        setTimeout(() => {
+          this.toolbar.classList.remove('extended');
+          // Save any changes made to the prompt
+          if (promptInput.value !== this.userPrompt) {
+            this.updatePrompt(promptInput.value);
+          }
+        }, 100);
+      }
+    });
+
     // Prevent toolbar from closing when interacting with input
     promptInput.addEventListener('click', (e) => {
       e.stopPropagation();
+    });
+
+    // Create edge tab (appears when toolbar is hidden)
+    this.edgeTab = document.createElement('div');
+    this.edgeTab.className = 'ph-edge-tab';
+    this.edgeTab.setAttribute('aria-label', 'Show Product Highlighter');
+
+    // Ensure edge tab starts hidden
+    this.edgeTab.classList.remove('visible');
+
+    // Edge tab click handler - brings back the toolbar with extended search
+    this.edgeTab.addEventListener('click', () => {
+      this.showToolbar(true); // Pass true to indicate this came from edge tab
     });
 
     // Assemble toolbar
@@ -1719,13 +1777,29 @@ class ProductHighlighter {
     this.toolbar.appendChild(this.toggleButton);
 
     // Add to page
-    console.log('➕ Adding toolbar to page...');
+    console.log('➕ Adding toolbar and edge tab to page...');
     try {
       document.body.appendChild(this.toolbar);
-      console.log('✅ Toolbar successfully added to page');
+      document.body.appendChild(this.edgeTab);
+      console.log('✅ Toolbar and edge tab successfully added to page');
 
       // Force a style recalculation to ensure CSS is applied
       this.toolbar.offsetHeight;
+
+      // Set initial toolbar state based on isEnabled
+      if (!this.isEnabled) {
+        // Start hidden with edge tab visible
+        this.toolbar.classList.add('hidden');
+        setTimeout(() => {
+          this.edgeTab.classList.add('visible');
+          console.log('🏷️ Edge tab made visible (toolbar disabled)');
+        }, 500); // Wait for initial animations to complete
+      } else {
+        // If enabled, start with search bar collapsed and hide edge tab
+        this.toolbar.classList.remove('extended');
+        this.edgeTab.classList.remove('visible');
+        console.log('🏷️ Edge tab hidden (toolbar enabled, search collapsed)');
+      }
 
       // Log computed styles for debugging
       const computedStyle = window.getComputedStyle(this.toolbar);
@@ -1769,13 +1843,11 @@ class ProductHighlighter {
     // Toggle the enabled state
     this.isEnabled = !this.isEnabled;
 
-    // Update button appearance
+    // Update button appearance and toolbar visibility
     if (this.isEnabled) {
-      this.toggleButton.classList.remove('inactive');
+      this.showToolbar();
     } else {
-      this.toggleButton.classList.add('inactive');
-      // Also hide the prompt bar when disabling
-      this.toolbar.classList.remove('extended');
+      this.hideToolbar();
     }
 
     // Save state to storage
@@ -1799,6 +1871,70 @@ class ProductHighlighter {
       action: 'toggleHighlighter',
       isEnabled: this.isEnabled
     });
+  }
+
+  showToolbar(extendSearch = false) {
+    this.isEnabled = true;
+    this.toggleButton.classList.remove('inactive');
+    this.toolbar.classList.remove('hidden');
+    this.edgeTab.classList.remove('visible');
+
+    if (extendSearch) {
+      // Extend search bar when coming from edge tab
+      this.toolbar.classList.add('extended');
+
+      // Focus the input after animation completes
+      setTimeout(() => {
+        const promptInput = this.toolbar.querySelector('.ph-prompt-input');
+        if (promptInput) {
+          promptInput.focus();
+        }
+      }, 400);
+
+      // Clear any existing auto-collapse timer
+      if (this.autoCollapseTimer) {
+        clearTimeout(this.autoCollapseTimer);
+      }
+
+      // Auto-collapse search bar after 30 seconds (0.5 minutes)
+      this.autoCollapseTimer = setTimeout(() => {
+        if (this.toolbar && this.toolbar.classList.contains('extended')) {
+          this.toolbar.classList.remove('extended');
+          console.log('🕐 Search bar auto-collapsed after 30 seconds');
+        }
+        this.autoCollapseTimer = null;
+      }, 30000); // 30 seconds = 0.5 minutes
+
+      console.log('✅ Toolbar shown with search bar extended (from edge tab, auto-collapse in 30s)');
+    } else {
+      // Start with search bar collapsed - only extend on hover if query exists
+      this.toolbar.classList.remove('extended');
+      console.log('✅ Toolbar shown with search bar collapsed');
+    }
+  }
+
+  hideToolbar() {
+    this.isEnabled = false;
+    this.toggleButton.classList.add('inactive');
+
+    // Clear all highlights when hiding toolbar
+    this.clearHighlights();
+    this.isCapturing = false;
+
+    // Collapse search bar first, then slide out toolbar
+    this.toolbar.classList.remove('extended');
+
+    // Wait for search bar collapse animation, then slide out toolbar
+    setTimeout(() => {
+      this.toolbar.classList.add('hidden');
+    }, 100); // Small delay to let search bar start collapsing
+
+    // Show edge tab after slide-out animation completes
+    setTimeout(() => {
+      this.edgeTab.classList.add('visible');
+    }, 500); // 100ms + 400ms slide-out animation
+
+    console.log('✅ Toolbar hidden and highlights cleared');
   }
 
   showCaptureProgress() {
